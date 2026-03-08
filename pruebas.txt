@@ -28,3 +28,4 @@ SELECT m.municipio, SUM(c.monto_desembolsado) AS total_monto_desembolsado FROM D
 cual es el tipo de entidad con mas creditos sin garantia y un rango de monto desembolsado mayor a 1 smlmv menor o igual a 3 smlmv
 SELECT e.tipo_entidad, COUNT(*) AS COUNT FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad WHERE c.tipo_garantia = 'Sin garantia' AND CAST(c.rango_monto_desembolsado AS INTEGER) > 1 AND CAST(c.rango_monto_desembolsado AS INTEGER) <= 3 GROUP BY e.tipo_entidad ORDER BY COUNT DESC NULLS LAST LIMIT 1;
 --------------
+prueba de que estoy en una rama
