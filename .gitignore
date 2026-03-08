@@ -1,0 +1,16 @@
+# entorno virtual
+venv/
+
+# datasets
+BaseGold.jsonl
+Tasas_activas_por_credito_Historico_20250807.csv
+Tablas_extra_Tesis_IBP.xlsx
+
+# python
+__pycache__/
+*.pyc
+
+# jupyter
+.ipynb_checkpoints/
+#models
+models/

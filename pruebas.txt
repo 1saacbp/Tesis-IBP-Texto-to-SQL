@@ -1,0 +1,30 @@
+cual es la tasa promedio para los deudores nuevos de las entidades para tasas vuvr?
+SELECT AVG(c.tasa_efectiva_promedio_ponderada) AS tasa_promedio FROM Credito c;
+--------------
+dime en que fecha se registraron mas créditos?
+SELECT MAX(c.numero_creditos_desembolsados) AS max_credits, c.fecha_corte FROM Credito c GROUP BY c.fecha_corte;
+--------------
+dime la tasa de interés promedio para personas juridicas?.
+SELECT AVG(c.tasa_efectiva_promedio_ponderada) AS tasa_promedio FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor WHERE d.tipo_persona = 'juridica';
+--------------
+cuales son los 2 grupos etnicos con mayor numero de creditos desembolsados?
+SELECT d.grupo_etnico, SUM(c.monto_desembolsado) AS total_monto_desembolsado FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor GROUP BY d.grupo_etnico ORDER BY total_monto_desembolsado DESC LIMIT 2;
+--------------
+créditos con tasa fs
+SELECT SUM(c.tasa_efectiva_promedio_ponderada) AS total_tasa_efectiva_ponderada FROM Credito c;
+--------------
+dime las entidades que comiencen por la letra a
+SELECT e.nombre_entidad FROM Entidades e WHERE e.nombre_entidad ilike 'a%';
+--------------
+dime los municipios del departamento de Antioquia con el mayor numero de creditos desembolsados en el año 2023
+SELECT m.municipio, SUM(c.monto_desembolsado) AS total_credits FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio WHERE EXTRACT(YEAR FROM c.fecha_corte::DATE) = 2023 GROUP BY m.municipio ORDER BY total_credits DESC;
+--------------
+quiero saber de los deudores que se dedican a ser asalariados cuantos usan creditos con tipos de tasas vuvr?
+SELECT COUNT(*) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor WHERE c.tipo_tasa ILIKE '%vuvr%';
+--------------
+cuales son los 5 municipios con mayor numero de deudores y el monto total desembolsado en cada uno?
+SELECT m.municipio, SUM(c.monto_desembolsado) AS total_monto_desembolsado FROM Deudor d JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio JOIN Credito c ON d.id_deudor = c.id_deudor GROUP BY m.municipio ORDER BY total_monto_desembolsado DESC LIMIT 5;
+--------------
+cual es el tipo de entidad con mas creditos sin garantia y un rango de monto desembolsado mayor a 1 smlmv menor o igual a 3 smlmv
+SELECT e.tipo_entidad, COUNT(*) AS COUNT FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad WHERE c.tipo_garantia = 'Sin garantia' AND CAST(c.rango_monto_desembolsado AS INTEGER) > 1 AND CAST(c.rango_monto_desembolsado AS INTEGER) <= 3 GROUP BY e.tipo_entidad ORDER BY COUNT DESC NULLS LAST LIMIT 1;
+--------------
