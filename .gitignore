@@ -2,7 +2,6 @@
 venv/
 
 # datasets
-BaseGold.jsonl
 Tasas_activas_por_credito_Historico_20250807.csv
 Tablas_extra_Tesis_IBP.xlsx
 
