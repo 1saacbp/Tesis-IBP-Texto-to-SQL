@@ -96,7 +96,7 @@ import json
 
 dataset = []
 
-with open("data/prueba-ejemplo-uno.jsonl", "r", encoding="utf-8") as f:
+with open("data/PruebasIniciales/prueba-ejemplo-uno.jsonl", "r", encoding="utf-8") as f:
     for line in f:
         dataset.append(json.loads(line))
 
