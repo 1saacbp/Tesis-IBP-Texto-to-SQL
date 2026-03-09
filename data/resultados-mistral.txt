@@ -1,0 +1,381 @@
+Pregunta: Lista todos los clientes.
+SQL modelo: SELECT
+    c.customer_id,
+    c.name,
+    c.address,
+    c.age,
+    p.product_id,
+    p.name,
+    p.price,
+    p.order_id,
+    p.quantity,
+    p.order_date
+FROM
+    customers c
+    INNER JOIN products_orders p
+        ON c.customer_id = p.customer_id
+SQL gold: SELECT * FROM customers;
+Error ejecución: no such column: p.name
+
+Pregunta: Muestra el nombre y la edad de todos los clientes.
+SQL modelo: SELECT customers.name, customers.age
+FROM customers
+INNER JOIN products_orders
+ON customers.customer_id = products_orders.customer_id
+SQL gold: SELECT name, age FROM customers;
+
+Pregunta: Lista todos los productos con sus precios.
+SQL modelo: SELECT
+    p.name,
+    p.price
+FROM
+    products p
+    INNER JOIN products_orders po
+        ON p.product_id = po.product_id
+SQL gold: SELECT * FROM products;
+
+Pregunta: Muestra todos los pedidos con su fecha.
+SQL modelo: SELECT
+    customers.customer_id,
+    customers.name,
+    customers.address,
+    customers.age,
+    products_orders.order_id,
+    products_orders.order_date
+FROM
+    customers
+INNER JOIN
+    products_orders
+ON
+    customers.customer_id = products_orders.customer_id
+SQL gold: SELECT * FROM products_orders;
+
+Pregunta: Encuentra todos los clientes mayores de 30 años.
+SQL modelo: SELECT customers.name, customers.address, customers.age
+FROM customers
+WHERE customers.age > 30
+SQL gold: SELECT * FROM customers WHERE age > 30;
+
+Pregunta: Lista los productos que cuestan más de 50.
+SQL modelo: SELECT p.name
+FROM products p
+WHERE p.price > 50
+SQL gold: SELECT * FROM products WHERE price > 50;
+
+Pregunta: Muestra los pedidos donde la cantidad es mayor que 3.
+SQL modelo: SELECT *
+FROM products_orders
+WHERE quantity > 3
+SQL gold: SELECT * FROM products_orders WHERE quantity > 3;
+
+Pregunta: Lista los nombres de los clientes en orden alfabético.
+SQL modelo: SELECT name
+FROM customers
+ORDER BY name
+SQL gold: SELECT name FROM customers ORDER BY name ASC;
+
+Pregunta: Muestra los productos ordenados por precio de mayor a menor.
+SQL modelo: SELECT p.name, p.price
+FROM products p
+JOIN products_orders po ON p.product_id = po.product_id
+GROUP BY p.name, p.price
+ORDER BY p.price DESC
+SQL gold: SELECT * FROM products ORDER BY price DESC;
+
+Pregunta: Encuentra los clientes menores de 25 años.
+SQL modelo: SELECT customers.name, customers.address, customers.age
+FROM customers
+WHERE customers.age < 25
+SQL gold: SELECT * FROM customers WHERE age < 25;
+
+Pregunta: Muestra todos los pedidos realizados después del 1 de enero de 2023.
+SQL modelo: SELECT *
+FROM products_orders
+WHERE order_date > '2023-01-01'
+SQL gold: SELECT * FROM products_orders WHERE order_date > '2023-01-01';
+
+Pregunta: Lista los productos con precio menor a 20.
+SQL modelo: SELECT p.name, p.price
+FROM products p
+WHERE p.price < 20
+SQL gold: SELECT * FROM products WHERE price < 20;
+
+Pregunta: Muestra los clientes cuyo nombre comienza con la letra A.
+SQL modelo: SELECT customers.name
+FROM customers
+WHERE customers.name LIKE 'A%'
+SQL gold: SELECT * FROM customers WHERE name LIKE 'A%';
+
+Pregunta: Lista los pedidos con cantidad igual a 1.
+SQL modelo: SELECT
+    customers.name,
+    products.name,
+    products_orders.quantity
+FROM
+    customers
+INNER JOIN
+    products_orders
+ON
+    customers.customer_id = products_orders.customer_id
+INNER JOIN
+    products
+ON
+    products_orders.product_id = products.product_id
+WHERE
+    products_orders.quantity = 1
+SQL gold: SELECT * FROM products_orders WHERE quantity = 1;
+
+Pregunta: Muestra todos los productos ordenados por precio ascendente.
+SQL modelo: SELECT p.name, p.price
+FROM products p
+JOIN products_orders po ON p.product_id = po.product_id
+JOIN customers c ON c.customer_id = po.customer_id
+ORDER BY p.price ASC
+SQL gold: SELECT * FROM products ORDER BY price ASC;
+
+Pregunta: Lista todos los pedidos junto con el nombre del cliente que los realizó.
+SQL modelo: SELECT c.name, o.order_id, o.order_date, p.name, p.price, o.quantity
+FROM customers c
+JOIN products_orders o ON c.customer_id = o.customer_id
+JOIN products p ON p.product_id = o.product_id
+SQL gold: SELECT c.name, p.order_id FROM products_orders p JOIN customers c ON p.customer_id = c.customer_id;
+
+Pregunta: Muestra el nombre del producto y la cantidad pedida en cada pedido.
+SQL modelo: SELECT
+    products.name,
+    products_orders.quantity
+FROM
+    products_orders
+INNER JOIN
+    products
+ON
+    products_orders.product_id = products.product_id
+SQL gold: SELECT pr.name, po.quantity FROM products_orders po JOIN products pr ON po.product_id = pr.product_id;
+
+Pregunta: Lista todos los clientes y los productos que han pedido.
+SQL modelo: customer_id | product_id | name | price | quantity | order_date
+1           | 1          | A    | 10    | 1        | 2019-01-01
+1           | 2          | B    | 20    | 2        | 2019-01-01
+1           | 3          | C    | 30    | 3        | 2019-01-01
+2           | 1          | A    | 10    | 1        | 2019-01-01
+2           | 2          | B    | 20    | 2        | 2019-01-01
+2           | 3          | C    | 30    | 3        | 2019-01-01
+3           | 1          | A    | 10    | 1        | 2019-01-01
+3           | 2          | B    | 20    | 2
+SQL gold: SELECT c.name, pr.name FROM products_orders po JOIN customers c ON po.customer_id = c.customer_id JOIN products pr ON po.product_id = pr.product_id;
+Error ejecución: near "customer_id": syntax error
+
+Pregunta: Encuentra el número total de pedidos.
+SQL modelo: SELECT COUNT(*) AS total_orders
+FROM products_orders;
+SQL gold: SELECT COUNT(*) FROM products_orders;
+
+Pregunta: Calcula el precio promedio de todos los productos.
+SQL modelo: SELECT AVG(p.price)
+FROM products p
+JOIN products_orders po ON p.product_id = po.product_id
+SQL gold: SELECT AVG(price) FROM products;
+
+Pregunta: Encuentra el producto más caro.
+SQL modelo: SELECT
+    p.name,
+    p.price
+FROM
+    products p
+WHERE
+    p.price = (
+        SELECT
+            MAX(p2.price)
+        FROM
+            products p2
+    )
+SQL gold: SELECT * FROM products ORDER BY price DESC LIMIT 1;
+
+Pregunta: Encuentra el producto más barato.
+SQL modelo: SELECT p.name, p.price
+FROM products p
+JOIN products_orders po ON p.product_id = po.product_id
+GROUP BY p.name, p.price
+ORDER BY p.price ASC
+LIMIT 1
+SQL gold: SELECT * FROM products ORDER BY price ASC LIMIT 1;
+
+Pregunta: Muestra la cantidad total pedida para cada producto.
+SQL modelo: SELECT
+    p.name,
+    SUM(po.quantity) AS total_quantity
+FROM
+    products_orders po
+    JOIN products p ON po.product_id = p.product_id
+GROUP BY
+    p.name
+SQL gold: SELECT product_id, SUM(quantity) FROM products_orders GROUP BY product_id;
+
+Pregunta: Lista cada cliente y el número total de pedidos que realizó.
+SQL modelo: customer_id | total_orders
+------------+-------------
+1           | 3
+2           | 2
+3           | 1
+SQL gold: SELECT customer_id, COUNT(*) FROM products_orders GROUP BY customer_id;
+Error ejecución: near "customer_id": syntax error
+
+Pregunta: Muestra la cantidad total de productos pedidos por cada cliente.
+SQL modelo: SELECT
+    customers.name,
+    SUM(products_orders.quantity) AS total_products
+FROM
+    customers
+INNER JOIN
+    products_orders
+ON
+    customers.customer_id = products_orders.customer_id
+GROUP BY
+    customers.name
+SQL gold: SELECT customer_id, SUM(quantity) FROM products_orders GROUP BY customer_id;
+
+Pregunta: Calcula el ingreso total generado por cada producto.
+SQL modelo: SELECT
+    p.name,
+    SUM(p.price * p.orders.quantity) AS total_income
+FROM
+    products AS p
+    INNER JOIN products_orders AS p.orders
+        ON p.product_id = p.orders.product_id
+GROUP BY
+    p.name
+SQL gold: SELECT p.product_id, SUM(p.price * po.quantity) FROM products_orders po JOIN products p ON po.product_id = p.product_id GROUP BY p.product_id;
+Error ejecución: near ".": syntax error
+
+Pregunta: Muestra el número de pedidos realizados en cada fecha.
+SQL modelo: SELECT
+    order_date,
+    COUNT(*) AS order_count
+FROM
+    products_orders
+GROUP BY
+    order_date
+ORDER BY
+    order_date;
+SQL gold: SELECT order_date, COUNT(*) FROM products_orders GROUP BY order_date;
+
+Pregunta: Encuentra la cantidad promedio pedida por pedido.
+SQL modelo: SELECT AVG(quantity) AS average_quantity
+FROM products_orders
+GROUP BY order_id
+SQL gold: SELECT AVG(quantity) FROM products_orders;
+
+Pregunta: Lista los productos que han sido pedidos al menos una vez.
+SQL modelo: SELECT p.name
+FROM products p
+WHERE EXISTS (
+    SELECT *
+    FROM products_orders po
+    WHERE po.product_id = p.product_id
+)
+SQL gold: SELECT DISTINCT product_id FROM products_orders;
+
+Pregunta: Muestra el número total de clientes diferentes que han realizado pedidos.
+SQL modelo: SELECT COUNT(DISTINCT customers.customer_id) AS total_customers
+FROM customers
+JOIN products_orders ON customers.customer_id = products_orders.customer_id
+GROUP BY customers.customer_id;
+SQL gold: SELECT COUNT(DISTINCT customer_id) FROM products_orders;
+
+Pregunta: Encuentra el cliente que realizó la mayor cantidad de pedidos.
+SQL modelo: SELECT customers.name, customers.address, customers.age, COUNT(products_orders.order_id) AS total_orders
+FROM customers
+JOIN products_orders ON customers.customer_id = products_orders.customer_id
+GROUP BY customers.name, customers.address, customers.age
+ORDER BY total_orders DESC
+LIMIT 1;
+SQL gold: SELECT customer_id, COUNT(*) AS total FROM products_orders GROUP BY customer_id ORDER BY total DESC LIMIT 1;
+
+Pregunta: Lista los productos que se han pedido más de 10 veces en total.
+SQL modelo: SELECT p.name
+FROM products p
+JOIN products_orders po ON p.product_id = po.product_id
+GROUP BY p.name
+HAVING COUNT(po.product_id) > 10
+SQL gold: SELECT product_id FROM products_orders GROUP BY product_id HAVING SUM(quantity) > 10;        
+
+Pregunta: Encuentra los clientes que nunca han realizado un pedido.
+SQL modelo: SELECT c.customer_id, c.name, c.address, c.age
+FROM customers c
+WHERE NOT EXISTS (
+    SELECT *
+    FROM products_orders po
+    WHERE po.customer_id = c.customer_id
+);
+SQL gold: SELECT * FROM customers WHERE customer_id NOT IN (SELECT customer_id FROM products_orders);  
+
+Pregunta: Encuentra los productos que nunca han sido pedidos.
+SQL modelo: SELECT p.name
+FROM products p
+WHERE NOT EXISTS (
+    SELECT *
+    FROM products_orders po
+    WHERE po.product_id = p.product_id
+)
+SQL gold: SELECT * FROM products WHERE product_id NOT IN (SELECT product_id FROM products_orders);     
+
+Pregunta: Muestra el producto que generó el mayor ingreso total.
+SQL modelo: SELECT
+    p.name AS product_name,
+    SUM(po.quantity * p.price) AS total_income
+FROM
+    products_orders po
+    INNER JOIN products p ON po.product_id = p.product_id
+GROUP BY
+    p.name
+ORDER BY
+    total_income DESC
+LIMIT 1;
+SQL gold: SELECT p.product_id, SUM(p.price * po.quantity) AS revenue FROM products_orders po JOIN products p ON po.product_id = p.product_id GROUP BY p.product_id ORDER BY revenue DESC LIMIT 1;
+
+Pregunta: Encuentra los clientes que han pedido más de 5 productos en total.
+SQL modelo: SELECT customers.name, customers.address, customers.age
+FROM customers
+JOIN products_orders ON customers.customer_id = products_orders.customer_id
+GROUP BY customers.name, customers.address, customers.age
+HAVING COUNT(products_orders.order_id) > 5
+SQL gold: SELECT customer_id FROM products_orders GROUP BY customer_id HAVING SUM(quantity) > 5;       
+
+Pregunta: Lista los 3 productos más pedidos por cantidad.
+SQL modelo: SELECT p.name, p.price, SUM(po.quantity) AS total_quantity
+FROM products_orders po
+JOIN products p ON po.product_id = p.product_id
+GROUP BY p.name, p.price
+ORDER BY total_quantity DESC
+LIMIT 3;
+SQL gold: SELECT product_id, SUM(quantity) AS total FROM products_orders GROUP BY product_id ORDER BY total DESC LIMIT 3;
+
+Pregunta: Encuentra el cliente que ha gastado más dinero.
+SQL modelo: SELECT customers.name, SUM(products_orders.quantity * products.price) AS total_spent       
+FROM customers
+JOIN products_orders ON customers.customer_id = products_orders.customer_id
+JOIN products ON products_orders.product_id = products.product_id
+GROUP BY customers.name
+ORDER BY total_spent DESC
+LIMIT 1;
+SQL gold: SELECT po.customer_id, SUM(p.price * po.quantity) AS total_spent FROM products_orders po JOIN products p ON po.product_id = p.product_id GROUP BY po.customer_id ORDER BY total_spent DESC LIMIT 1; 
+
+Pregunta: Muestra los pedidos cuya cantidad es mayor que el promedio de todos los pedidos.
+SQL modelo: SELECT *
+FROM products_orders
+WHERE quantity > (SELECT AVG(quantity)
+                  FROM products_orders)
+SQL gold: SELECT * FROM products_orders WHERE quantity > (SELECT AVG(quantity) FROM products_orders);  
+
+Pregunta: Encuentra el precio promedio de los productos que han sido pedidos.
+SQL modelo: SELECT AVG(p.price)
+FROM products_orders po
+JOIN products p ON po.product_id = p.product_id
+GROUP BY po.order_id
+SQL gold: SELECT AVG(price) FROM products WHERE product_id IN (SELECT DISTINCT product_id FROM products_orders);
+
+----- RESULTADOS -----
+Total preguntas: 40
+Exact Match: 0.0
+Execution Accuracy: 0.3
+Error Rate: 0.1
