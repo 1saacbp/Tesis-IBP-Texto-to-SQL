@@ -96,7 +96,7 @@ import json
 
 dataset = []
 
-with open("data/prueba-ejemplo-uno.jsonl", "r", encoding="utf-8") as f:
+with open("data/PruebasIniciales/prueba-ejemplo-uno.jsonl", "r", encoding="utf-8") as f:
     for line in f:
         dataset.append(json.loads(line))
 
@@ -109,6 +109,33 @@ total = len(dataset)
 conn = sqlite3.connect("src/bd-prueba-inicial.db")
 cursor = conn.cursor()
 print(len(dataset))
+
+#verificación de validez de los ejemplos gold
+valid = 0
+invalid = 0
+
+errores = []
+for i, row in enumerate(dataset):
+
+    sql_gold = row["sql"] 
+
+    try:
+        res_gold = cursor.execute(sql_gold).fetchall()
+        valid += 1
+
+    except Exception as e:
+
+        invalid += 1
+
+        errores.append({
+            "index": i,
+            "sql": sql_gold,
+            "error": str(e)
+        }
+)
+print(f"SQL válidos: {valid}")
+print(f"SQL inválidos: {invalid}")
+#------------------------------------
 for row in dataset:
 
     pregunta = row["question"]
