@@ -1,0 +1,40 @@
+{"question": "Lista todos los clientes.", "sql": "SELECT * FROM customers;"}
+{"question": "Muestra el nombre y la edad de todos los clientes.", "sql": "SELECT name, age FROM customers;"}
+{"question": "Lista todos los productos con sus precios.", "sql": "SELECT * FROM products;"}
+{"question": "Muestra todos los pedidos con su fecha.", "sql": "SELECT * FROM products_orders;"}
+{"question": "Encuentra todos los clientes mayores de 30 años.", "sql": "SELECT * FROM customers WHERE age > 30;"}
+{"question": "Lista los productos que cuestan más de 50.", "sql": "SELECT * FROM products WHERE price > 50;"}
+{"question": "Muestra los pedidos donde la cantidad es mayor que 3.", "sql": "SELECT * FROM products_orders WHERE quantity > 3;"}
+{"question": "Lista los nombres de los clientes en orden alfabético.", "sql": "SELECT name FROM customers ORDER BY name ASC;"}
+{"question": "Muestra los productos ordenados por precio de mayor a menor.", "sql": "SELECT * FROM products ORDER BY price DESC;"}
+{"question": "Encuentra los clientes menores de 25 años.", "sql": "SELECT * FROM customers WHERE age < 25;"}
+{"question": "Muestra todos los pedidos realizados después del 1 de enero de 2023.", "sql": "SELECT * FROM products_orders WHERE order_date > '2023-01-01';"}
+{"question": "Lista los productos con precio menor a 20.", "sql": "SELECT * FROM products WHERE price < 20;"}
+{"question": "Muestra los clientes cuyo nombre comienza con la letra A.", "sql": "SELECT * FROM customers WHERE name LIKE 'A%';"}
+{"question": "Lista los pedidos con cantidad igual a 1.", "sql": "SELECT * FROM products_orders WHERE quantity = 1;"}
+{"question": "Muestra todos los productos ordenados por precio ascendente.", "sql": "SELECT * FROM products ORDER BY price ASC;"}
+{"question": "Lista todos los pedidos junto con el nombre del cliente que los realizó.", "sql": "SELECT c.name, p.order_id FROM products_orders p JOIN customers c ON p.customer_id = c.customer_id;"}
+{"question": "Muestra el nombre del producto y la cantidad pedida en cada pedido.", "sql": "SELECT pr.name, po.quantity FROM products_orders po JOIN products pr ON po.product_id = pr.product_id;"}
+{"question": "Lista todos los clientes y los productos que han pedido.", "sql": "SELECT c.name, pr.name FROM products_orders po JOIN customers c ON po.customer_id = c.customer_id JOIN products pr ON po.product_id = pr.product_id;"}
+{"question": "Encuentra el número total de pedidos.", "sql": "SELECT COUNT(*) FROM products_orders;"}
+{"question": "Calcula el precio promedio de todos los productos.", "sql": "SELECT AVG(price) FROM products;"}
+{"question": "Encuentra el producto más caro.", "sql": "SELECT * FROM products ORDER BY price DESC LIMIT 1;"}
+{"question": "Encuentra el producto más barato.", "sql": "SELECT * FROM products ORDER BY price ASC LIMIT 1;"}
+{"question": "Muestra la cantidad total pedida para cada producto.", "sql": "SELECT product_id, SUM(quantity) FROM products_orders GROUP BY product_id;"}
+{"question": "Lista cada cliente y el número total de pedidos que realizó.", "sql": "SELECT customer_id, COUNT(*) FROM products_orders GROUP BY customer_id;"}
+{"question": "Muestra la cantidad total de productos pedidos por cada cliente.", "sql": "SELECT customer_id, SUM(quantity) FROM products_orders GROUP BY customer_id;"}
+{"question": "Calcula el ingreso total generado por cada producto.", "sql": "SELECT p.product_id, SUM(p.price * po.quantity) FROM products_orders po JOIN products p ON po.product_id = p.product_id GROUP BY p.product_id;"}
+{"question": "Muestra el número de pedidos realizados en cada fecha.", "sql": "SELECT order_date, COUNT(*) FROM products_orders GROUP BY order_date;"}
+{"question": "Encuentra la cantidad promedio pedida por pedido.", "sql": "SELECT AVG(quantity) FROM products_orders;"}
+{"question": "Lista los productos que han sido pedidos al menos una vez.", "sql": "SELECT DISTINCT product_id FROM products_orders;"}
+{"question": "Muestra el número total de clientes diferentes que han realizado pedidos.", "sql": "SELECT COUNT(DISTINCT customer_id) FROM products_orders;"}
+{"question": "Encuentra el cliente que realizó la mayor cantidad de pedidos.", "sql": "SELECT customer_id, COUNT(*) AS total FROM products_orders GROUP BY customer_id ORDER BY total DESC LIMIT 1;"}
+{"question": "Lista los productos que se han pedido más de 10 veces en total.", "sql": "SELECT product_id FROM products_orders GROUP BY product_id HAVING SUM(quantity) > 10;"}
+{"question": "Encuentra los clientes que nunca han realizado un pedido.", "sql": "SELECT * FROM customers WHERE customer_id NOT IN (SELECT customer_id FROM products_orders);" }
+{"question": "Encuentra los productos que nunca han sido pedidos.", "sql": "SELECT * FROM products WHERE product_id NOT IN (SELECT product_id FROM products_orders);" }
+{"question": "Muestra el producto que generó el mayor ingreso total.", "sql": "SELECT p.product_id, SUM(p.price * po.quantity) AS revenue FROM products_orders po JOIN products p ON po.product_id = p.product_id GROUP BY p.product_id ORDER BY revenue DESC LIMIT 1;"}
+{"question": "Encuentra los clientes que han pedido más de 5 productos en total.", "sql": "SELECT customer_id FROM products_orders GROUP BY customer_id HAVING SUM(quantity) > 5;"}
+{"question": "Lista los 3 productos más pedidos por cantidad.", "sql": "SELECT product_id, SUM(quantity) AS total FROM products_orders GROUP BY product_id ORDER BY total DESC LIMIT 3;"}
+{"question": "Encuentra el cliente que ha gastado más dinero.", "sql": "SELECT po.customer_id, SUM(p.price * po.quantity) AS total_spent FROM products_orders po JOIN products p ON po.product_id = p.product_id GROUP BY po.customer_id ORDER BY total_spent DESC LIMIT 1;"}
+{"question": "Muestra los pedidos cuya cantidad es mayor que el promedio de todos los pedidos.", "sql": "SELECT * FROM products_orders WHERE quantity > (SELECT AVG(quantity) FROM products_orders);" }
+{"question": "Encuentra el precio promedio de los productos que han sido pedidos.", "sql": "SELECT AVG(price) FROM products WHERE product_id IN (SELECT DISTINCT product_id FROM products_orders);" }
