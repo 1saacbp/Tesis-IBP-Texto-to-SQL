@@ -38,7 +38,7 @@ conn.close()
 
 print("Base de datos creada")
 
-conn = sqlite3.connect("src/bd-prueba-inicial.db")
+conn = sqlite3.connect("src/PruebasIniciales/bd-prueba-inicial.db")
 cursor = conn.cursor()
 
 cursor.execute("INSERT or REPLACE INTO customers VALUES (1,'Ana','Bogota',21)")

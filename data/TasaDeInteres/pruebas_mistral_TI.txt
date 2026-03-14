@@ -1,0 +1,306 @@
+Pregunta: Lista todos los clientes.
+SQL modelo: SELECT
+    c.customer_id,
+    c.name,
+    c.address,
+    c.age,
+    p.product_id,
+    p.name,
+    p.price,
+    p.order_id,
+    p.quantity,
+    p.order_date
+FROM
+    customers c
+    INNER JOIN products_orders p
+        ON c.customer_id = p.customer_id
+SQL gold: SELECT * FROM customers;
+Error ejecución: no such column: p.name
+
+Pregunta: Muestra el nombre y la edad de todos los clientes.
+SQL modelo: SELECT customers.name, customers.age
+FROM customers
+INNER JOIN products_orders
+ON customers.customer_id = products_orders.customer_id
+SQL gold: SELECT name, age FROM customers;
+
+Pregunta: Lista todos los productos con sus precios.
+SQL modelo: SELECT
+    p.name,
+    p.price
+FROM
+    products p
+    INNER JOIN products_orders po
+        ON p.product_id = po.product_id
+SQL gold: SELECT * FROM products;
+Traceback (most recent call last):
+  File "c:\Users\isaac\Downloads\proyecto_tesis\src\PruebasIniciales\mistral_prueba.py", line 144, in <module>
+    sql_modelo = generar_sql(pregunta)
+                 ^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\isaac\Downloads\proyecto_tesis\src\PruebasIniciales\mistral_prueba.py", line 85, in generar_sql
+    output = llm(
+             ^^^^
+  File "C:\Users\isaac\Downloads\proyecto_tesis\venv\Lib\site-packages\llama_cpp\llama.py", line 1904, in __call__
+    return self.create_completion(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\isaac\Downloads\proyecto_tesis\venv\Lib\site-packages\llama_cpp\llama.py", line 1837, in create_completion
+in _create_completion
+    for token in self.generate(
+  File "C:\Users\isaac\Downloads\proyecto_tesis\venv\Lib\site-packages\llama_cpp\llama.py", line 914, in generate
+    self.eval(tokens)
+  File "C:\Users\isaac\Downloads\proyecto_tesis\venv\Lib\site-packages\llama_cpp\llama.py", line 648, in eval
+    self._ctx.decode(self._batch)
+  File "C:\Users\isaac\Downloads\proyecto_tesis\venv\Lib\site-packages\llama_cpp\_internals.py", line 322, in decode      
+    return_code = llama_cpp.llama_decode(
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+(venv) PS C:\Users\isaac\Downloads\proyecto_tesis> & c:\Users\isaac\Downloads\proyecto_tesis\venv\Scripts\python.exe c:/Users/isaac/Downloads/proyecto_tesis/src/TasaDeInteres/mistral.py
+llama_context: n_ctx_per_seq (4096) < n_ctx_train (32768) -- the full capacity of the model will not be utilized
+30
+SQL válidos: 30
+SQL inválidos: 0
+
+Pregunta: ¿Cuántos creditos existen por fecha de corte?
+SQL modelo: SELECT COUNT(*) FROM Credito WHERE fecha_corte = '2019-06-30';
+SQL gold: SELECT DATE(fecha_corte), COUNT(*) FROM Credito GROUP BY DATE(fecha_corte);
+
+Pregunta: cual es la mayor cantidad desembolsada?
+SQL modelo: SELECT
+    Credito.monto_desembolsado
+FROM
+    Credito
+WHERE
+    Credito.monto_desembolsado = (
+        SELECT
+            MAX(Credito.monto_desembolsado)
+        FROM
+            Credito
+    )
+SQL gold: SELECT MAX(monto_desembolsado) FROM Credito;
+
+Pregunta: ¿Cuántos deudores hay en el departamento del Cauca?
+SQL modelo: SELECT COUNT(*) FROM Deudor WHERE codigo_municipio = 100000000000000000000000000000000000000000000000000000000000000000000000
+SQL gold: SELECT COUNT(*) FROM Deudor WHERE codigo_municipio IN (SELECT codigo_municipio FROM Municipio WHERE departamento = 'cauca');
+
+Pregunta: dime la suma desembolsada por sexo
+SQL modelo: SELECT
+    sexo,
+    SUM(monto_desembolsado) AS suma_desembolsada
+FROM
+    Credito
+    INNER JOIN Deudor ON Credito.id_deudor = Deudor.id_deudor
+GROUP BY
+    sexo
+ORDER BY
+    suma_desembolsada DES
+SQL gold: SELECT d.sexo, SUM(c.monto_desembolsado) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor GROUP BY d.sexo;
+Error ejecución: near "DES": syntax error
+
+Pregunta: ¿Cuál es la entidad con menor tasa promedio?
+SQL modelo: SELECT e.nombre_entidad, AVG(c.tasa_efectiva_promedio_ponderada) AS tasa_promedio
+FROM Entidades e
+JOIN Credito c ON e.id_entidad = c.id_entidad
+GROUP BY e.nombre_entidad
+ORDER BY tasa_promedio ASC
+LIMIT 1;
+SQL gold: SELECT nombre_entidad FROM Entidades WHERE id_entidad = (SELECT id_entidad FROM Credito GROUP BY id_entidad ORDER BY AVG(tasa_efectiva_promedio_ponderada) ASC LIMIT 1);
+
+Pregunta: numero de créditos que fueron desembolsados al menos hasta 2025-07-15?
+SQL modelo: SELECT COUNT(*) FROM Credito WHERE fecha_corte <= '2025-07-15'
+SQL gold: SELECT COUNT(*) FROM Credito WHERE DATE(fecha_corte) <= '2025-07-15';
+
+Pregunta: Muestre los grupos definidos por entidad y sexo junto con el total desembolsado.
+SQL modelo: SELECT
+    e.tipo_entidad,
+    e.nombre_tipo_entidad,
+    e.codigo_entidad,
+    e.nombre_entidad,
+    COUNT(d.id_deudor) AS total_deudores
+FROM
+    Entidades e
+    INNER JOIN Deudor d ON e.id_ent
+SQL gold: SELECT e.nombre_entidad, d.sexo, SUM(c.monto_desembolsado) FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad JOIN Deudor d ON c.id_deudor = d.id_deudor GROUP BY e.nombre_entidad, d.sexo;
+Error ejecución: no such column: e.id_ent
+
+Pregunta: muestrame las actividades economicas que menos creditos han solicitado?
+SQL modelo: SELECT Ciiu.actividad_economica, COUNT(*) AS cantidad
+FROM Deudor
+JOIN Credito ON Deudor.id_deudor = Credito.id_deudor
+JOIN Ciiu ON Credito.codigo_ciiu = Ciiu.codigo_ciiu
+GROUP BY Ciiu.actividad
+SQL gold: SELECT ci.actividad_economica, COUNT(*) AS total FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Ciiu ci ON d.codigo_ciiu = ci.codigo_ciiu GROUP BY ci.actividad_economica ORDER BY total ASC LIMIT 5;
+Error ejecución: no such column: Credito.codigo_ciiu
+
+Pregunta: ¿Cuál es el monto final desembolsado por sexo?
+SQL modelo: SELECT
+    sexo,
+    SUM(monto_desembolsado) AS monto_final_desembolsado
+FROM
+    Credito
+    INNER JOIN Deudor ON Credito.id_deudor = Deudor.id_deudor
+GROUP BY
+    sexo
+ORDER BY
+    monto_final_desem
+SQL gold: SELECT d.sexo, SUM(c.monto_desembolsado) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor GROUP BY d.sexo;
+Error ejecución: no such column: monto_final_desem
+
+Pregunta: cuantos creditos sin garantia tiene las personas de Bogota?
+SQL modelo: SELECT COUNT(*) FROM Credito WHERE id_deudor IN (SELECT id_deudor FROM Deudor WHERE codigo_municipio = 1 AND tipo_garantia = 'Sin garantia')
+SQL gold: SELECT COUNT(*) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio WHERE c.tipo_garantia = 'sin garantia' AND m.municipio = 'bogota';
+
+Pregunta: cual fue el desembolso menor en la fecha 2023-8-15?
+SQL modelo: SELECT MIN(monto_desembolsado)
+FROM Credito
+WHERE fecha_corte = '2023-8-15'
+SQL gold: SELECT MIN(monto_desembolsado) FROM Credito WHERE DATE(fecha_corte) = '2023-08-15';
+
+Pregunta: Que creditos tienen un margen adicional igual a 0
+SQL modelo: SELECT * FROM Credito WHERE margen_adicional = 0;
+SQL gold: SELECT * FROM Credito WHERE margen_adicional = 0;
+
+Pregunta: cuales son los tipos de entidades disponibles?
+SQL modelo: SELECT DISTINCT tipo_entidad FROM Entidades;
+SQL gold: SELECT DISTINCT tipo_entidad FROM Entidades;
+
+Pregunta: cual es la tasa promedio para los deudores nuevos de las entidades para tasas vuvr
+SQL modelo: SELECT AVG(tasa_efectiva_promedio_ponderada)
+FROM Credito
+WHERE tipo_tasa = 'VUV'
+AND id_deudor IN (
+    SELECT id_deudor
+    FROM Deudor
+    WHERE tipo_persona = 'Nuevo'
+);
+SQL gold: SELECT AVG(tasa_efectiva_promedio_ponderada) AS promedio_tasa FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor WHERE d.clase_deudor = 'deudor nuevo en la entidad' AND c.tipo_tasa = 'vuvr';
+
+Pregunta: ¿Cuál es el margen adicional promedio por municipio?
+SQL modelo: SELECT
+    m.municipio,
+    AVG(c.margen_adicional) AS margen_adicional
+FROM
+    Municipio m
+    INNER JOIN Credito c
+        ON m.codigo_municipio = c.codigo_municipio
+GROUP BY
+    m.municipio
+ORDER BY
+    margen_adicional
+SQL gold: SELECT m.municipio, AVG(c.margen_adicional) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio GROUP BY m.municipio;
+Error ejecución: no such column: c.codigo_municipio
+
+Pregunta: dame el promedio de tasa efectiva para los creditos con este rango de monto Mayor a 3 SMLMV menor o igual a 6 SMLMV
+SQL modelo: SELECT AVG(tasa_efectiva_promedio_ponderada)
+FROM Credito
+WHERE rango_monto_desembolsado BETWEEN '3 SMLMV' AND '6 SMLMV'
+SQL gold: SELECT AVG(tasa_efectiva_promedio_ponderada) FROM Credito WHERE rango_monto_desembolsado ='mayor a 3 smlmv menor o igual a 6 smlmv';
+
+Pregunta: ¿Cuál es la tasa promedio por departamento?
+SQL modelo: SELECT
+    departamento,
+    AVG(tasa_efectiva_promedio_ponderada) AS tasa_promedio
+FROM
+    Credito
+JOIN
+    Municipio ON Credito.codigo_municipio = Municipio.codigo_municipio
+GROUP BY
+    departamento
+ORDER BY
+    tasa_promedio
+SQL gold: SELECT m.departamento, AVG(c.tasa_efectiva_promedio_ponderada) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio GROUP BY m.departamento;
+Error ejecución: no such column: Credito.codigo_municipio
+
+Pregunta: quiero ver la informacion de los creditos con el nombre de cada entidad
+SQL modelo: SELECT e.nombre_entidad,c.id_credito,c.fecha_corte,c.tipo_credito,c.tipo_garantia,c.producto_credito,c.plazo_credito,c.tasa_efectiva_promedio_ponderada,c.margen_adicional,c.monto_des
+SQL gold: SELECT c.*, e.nombre_entidad FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad;
+Error ejecución: no such column: e.nombre_entidad
+
+Pregunta: En que distintos departamentos residen las grandes empresas?
+SQL modelo: SELECT DISTINCT municipio.municipio,departamento
+FROM municipio
+INNER JOIN credito
+ON municipio.codigo_municipio = credito.codigo_municipio
+INNER JOIN deudor
+ON credito.id_deudor = deudor.id_deudor
+INNER JOIN entidades
+ON entidades
+SQL gold: SELECT DISTINCT m.departamento FROM Entidades e JOIN Credito c ON e.id_entidad = c.id_entidad JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio WHERE d.tamano_empresa = 'gran empresa';
+Error ejecución: no such column: credito.codigo_municipio
+
+Pregunta: ¿Cuál es la tasa promedio por tamaño de empresa?
+SQL modelo: SELECT AVG(tasa_efectiva_promedio_ponderada) AS "Tasa promedio por tamaño de empresa"
+FROM Credito
+JOIN Deudor ON Credito.id_deudor = Deudor.id_deudor
+JOIN Entidades ON Deudor.codigo_municipio = Entidades.cod
+SQL gold: SELECT d.tamano_empresa, AVG(c.tasa_efectiva_promedio_ponderada) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor GROUP BY d.tamano_empresa;
+Error ejecución: no such column: Entidades.cod
+
+Pregunta: dame el rango del monto desembolsado mas usado en rci colombia s.a.
+SQL modelo: SELECT rango_monto_desembolsado
+FROM credito
+GROUP BY rango_monto_desembolsado
+ORDER BY COUNT(*) DESC
+LIMIT 1;
+SQL gold: SELECT c.rango_monto_desembolsado FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad WHERE e.nombre_entidad = 'rci colombia s.a.' GROUP BY c.rango_monto_desembolsado ORDER BY COUNT(*) DESC LIMIT 1;
+
+Pregunta: Cuanto suma todo lo desembolsado el 26 de septiembre del 2023?
+SQL modelo: SELECT SUM(monto_desembolsado)
+FROM Credito
+WHERE fecha_corte = '2023-09-26'
+SQL gold: SELECT SUM(monto_desembolsado) FROM Credito WHERE DATE(fecha_corte) = '2023-09-26';
+
+Pregunta: ¿Cuántos créditos se han otorgado por actividad económica?
+SQL modelo: SELECT COUNT(*) FROM Credito WHERE id_deudor IS NOT NULL;
+SQL gold: SELECT ci.actividad_economica, COUNT(c.id_credito) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Ciiu ci ON d.codigo_ciiu = ci.codigo_ciiu GROUP BY ci.actividad_economica;
+
+Pregunta: dame el registro que tenga la mayor cantidad de creditos desembolsados
+SQL modelo: SELECT * FROM Credito WHERE numero_creditos_desembolsados = (SELECT MAX(numero_creditos_desembolsados) FROM Credito);
+SQL gold: SELECT * FROM Credito ORDER BY numero_creditos_desembolsados DESC LIMIT 1;
+
+Pregunta: estoy buscando el promedio de tasa efectiva del año 2025
+SQL modelo: SELECT AVG(tasa_efectiva_promedio_ponderada)
+FROM Credito
+WHERE fecha_corte = '2025-01-01'
+AND tipo_tasa = 'Tasa Efectiva Promedio Ponderada'
+AND rango_monto_desembolsado = 'Rango 1000000
+SQL gold: SELECT AVG(tasa_efectiva_promedio_ponderada) FROM Credito WHERE STRFTIME('%Y', fecha_corte) = '2025';
+Error ejecución: unrecognized token: "'Rango 1000000"
+
+Pregunta: Cuántos creditos tiene cada entidad?
+SQL modelo: SELECT Entidades.codigo_entidad, COUNT(*) AS cantidad
+FROM Entidades
+INNER JOIN Credito ON Entidades.id_entidad = Credito.id_entidad
+GROUP BY Entidades.codigo_entidad
+ORDER BY cantidad DESC;
+SQL gold: SELECT e.nombre_entidad, COUNT(*) FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad GROUP BY e.nombre_entidad;
+
+Pregunta: Cual es el grupo etnico con mas deudores?
+SQL modelo: SELECT grupo_etnico, COUNT(*) AS cantidad
+FROM Deudor
+GROUP BY grupo_etnico
+ORDER BY cantidad DESC
+LIMIT 1;
+SQL gold: SELECT d.grupo_etnico, COUNT(*) AS total FROM Deudor d JOIN Credito c ON d.id_deudor = c.id_deudor GROUP BY d.grupo_etnico ORDER BY total DESC LIMIT 1;
+
+Pregunta: Qué tipo de crédito se otorgó en el año 2022
+SQL modelo: SELECT tipo_credito FROM Credito WHERE fecha_corte = '2022-01-01'
+SQL gold: SELECT DISTINCT tipo_credito FROM Credito WHERE STRFTIME('%Y', fecha_corte) = '2022';
+
+Pregunta: cual es la actividad economica con menor tasa promedio
+SQL modelo: SELECT C.actividad_economica, AVG(C.tasa_efectiva_promedio_ponderada)
+FROM Credito C
+JOIN Deudor D ON C.id_deudor = D.id_deudor
+JOIN Entidades E ON D.codigo_municipio = E.codigo_municipio
+JOIN
+SQL gold: SELECT ci.actividad_economica, AVG(c.tasa_efectiva_promedio_ponderada) AS promedio_tasa FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Ciiu ci ON d.codigo_ciiu = ci.codigo_ciiu GROUP BY ci.actividad_economica ORDER BY promedio_tasa ASC LIMIT 1;
+Error ejecución: incomplete input
+
+Pregunta: cuantos creditos hay de consumo o vivienda existen?
+SQL modelo: SELECT COUNT(*) FROM Credito WHERE tipo_credito = 'Consumo' OR tipo_credito = 'Vivienda';
+SQL gold: SELECT COUNT(*) FROM Credito WHERE tipo_credito IN ('consumo', 'vivienda');
+
+----- RESULTADOS -----
+Total preguntas: 30
+Exact Match: 0.06666666666666667
+Execution Accuracy: 0.3
+Error Rate: 0.36666666666666664

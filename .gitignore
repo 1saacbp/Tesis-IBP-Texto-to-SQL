@@ -4,7 +4,7 @@ venv/
 # datasets
 Tasas_activas_por_credito_Historico_20250807.csv
 Tablas_extra_Tesis_IBP.xlsx
-
+mi_base.db
 # python
 __pycache__/
 *.pyc
