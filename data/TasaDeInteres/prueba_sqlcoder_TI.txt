@@ -1,0 +1,151 @@
+30
+SQL válidos: 30
+SQL inválidos: 0
+
+Pregunta: ¿Cuántos creditos existen por fecha de corte?
+SQL modelo: SELECT COUNT(*) AS total_credits FROM credito WHERE fecha_corte IS NOT NULL;
+SQL gold: SELECT DATE(fecha_corte), COUNT(*) FROM Credito GROUP BY DATE(fecha_corte);
+
+Pregunta: cual es la mayor cantidad desembolsada?
+SQL modelo: SELECT MAX(credito.monto_desembolsado) AS max_monto_desembolsado FROM credito;
+SQL gold: SELECT MAX(monto_desembolsado) FROM Credito;
+
+Pregunta: ¿Cuántos deudores hay en el departamento del Cauca?
+SQL modelo: SELECT COUNT(*) FROM Deulor WHERE departamento ilike '%Cauca%';
+SQL gold: SELECT COUNT(*) FROM Deudor WHERE codigo_municipio IN (SELECT codigo_municipio FROM Municipio WHERE departamento = 'cauca');
+Error ejecución: near "ilike": syntax error
+
+Pregunta: dime la suma desembolsada por sexo
+SQL modelo: SELECT SUM(credito.monto_desembolsado) AS total_dinero_desembolsado FROM credito JOIN deulor ON credito.id_deulor = deulor.id_deulor WHERE deulor.sexo = 'si';
+SQL gold: SELECT d.sexo, SUM(c.monto_desembolsado) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor GROUP BY d.sexo;
+Error ejecución: no such table: deulor
+
+Pregunta: ¿Cuál es la entidad con menor tasa promedio?
+SQL modelo: SELECT Entidades.nombre_tipo_entidad FROM Entidades JOIN Credito ON Entidades.id_entidad = Credito.id_entidad WHERE Credito.tipo_tasa = 'menor' ORDER BY Entidades.nombre_tipo_entidad NULLS LAST;
+SQL gold: SELECT nombre_entidad FROM Entidades WHERE id_entidad = (SELECT id_entidad FROM Credito GROUP BY id_entidad ORDER BY AVG(tasa_efectiva_promedio_ponderada) ASC LIMIT 1);
+
+Pregunta: numero de créditos que fueron desembolsados al menos hasta 2025-07-15?
+SQL modelo: SELECT SUM(credito.numero_creditos_desembolsados) AS total_credits_released FROM credito WHERE credito.id_deulor IN (SELECT deulor.id_deulor FROM deulor WHERE deulor.tamano_empresa <= '2025-07-15') AND credito.id_entidad IN (SELECT entidad.id_entidad FROM entidad WHERE entidad.nombre_tipo_entidad ILIKE '%municipio%');
+SQL gold: SELECT COUNT(*) FROM Credito WHERE DATE(fecha_corte) <= '2025-07-15';
+Error ejecución: near "ILIKE": syntax error
+
+Pregunta: Muestre los grupos definidos por entidad y sexo junto con el total desembolsado.
+SQL modelo: SELECT e.nombre_entidad, d.tipo_persona, d.sexo, SUM(c.monto_desembolsado) AS total_monto_desembolsado FROM entidades e JOIN deulor d ON e.id_entidad = d.id_entidad JOIN credito c ON d.id_deulor = c.id_deulor GROUP BY e.nombre_entidad, d.tipo_persona, d.sexo;
+SQL gold: SELECT e.nombre_entidad, d.sexo, SUM(c.monto_desembolsado) FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad JOIN Deudor d ON c.id_deudor = d.id_deudor GROUP BY e.nombre_entidad, d.sexo;
+Error ejecución: no such table: deulor
+
+Pregunta: muestrame las actividades economicas que menos creditos han solicitado?
+SQL modelo: SELECT c.actividad_economica, COUNT(c.actividad_economica) AS num_credits FROM credito c GROUP BY c.actividad_economica ORDER BY num_credits ASC NULLS LAST;
+SQL gold: SELECT ci.actividad_economica, COUNT(*) AS total FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Ciiu ci ON d.codigo_ciiu = ci.codigo_ciiu GROUP BY ci.actividad_economica ORDER BY total ASC LIMIT 5;
+Error ejecución: no such column: c.actividad_economica
+
+Pregunta: ¿Cuál es el monto final desembolsado por sexo?
+SQL modelo: SELECT SUM(credito.monto_desembolsado) AS total_dinero_desembolsado FROM credito JOIN deulor ON credito.id_deulor = deulor.id_deulor WHERE deulor.sexo = 'F';
+SQL gold: SELECT d.sexo, SUM(c.monto_desembolsado) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor GROUP BY d.sexo;
+Error ejecución: no such table: deulor
+
+Pregunta: cuantos creditos sin garantia tiene las personas de Bogota?
+SQL modelo: SELECT COUNT(*) AS total_credits_sin_garantia FROM credito c JOIN deulor d ON c.id_deulor = d.id_deulor JOIN municipio m ON d.codigo_municipio = m.codigo_municipio WHERE m.departamento = 'Bogota' AND c.tipo_garantia = 'no';
+SQL gold: SELECT COUNT(*) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio WHERE c.tipo_garantia = 'sin garantia' AND m.municipio = 'bogota';
+Error ejecución: no such table: deulor
+
+Pregunta: cual fue el desembolso menor en la fecha 2023-8-15?
+SQL modelo: SELECT MIN(monto_desembolsado) AS menor_desembolsado FROM credito WHERE id_deulor = (SELECT id_deulor FROM deulor WHERE sexo = 'M' AND clase_deulor = 'Sindicato') AND id_entidad = (SELECT id_entidad FROM entidades WHERE nombre_entidad = 'Municipio de San Miguelito');
+SQL gold: SELECT MIN(monto_desembolsado) FROM Credito WHERE DATE(fecha_corte) = '2023-08-15';
+Error ejecución: no such table: deulor
+
+Pregunta: Que creditos tienen un margen adicional igual a 0
+SQL modelo: SELECT id_credito FROM credito WHERE margen_adicional = 0
+SQL gold: SELECT * FROM Credito WHERE margen_adicional = 0;
+
+Pregunta: cuales son los tipos de entidades disponibles?
+SQL modelo:
+SQL gold: SELECT DISTINCT tipo_entidad FROM Entidades;
+
+Pregunta: cual es la tasa promedio para los deudores nuevos de las entidades para tasas vuvr
+SQL modelo: SELECT AVG(cre.tasa_efectiva_promedio_ponderada) AS average_effective_promised_interest_rate FROM cre.credito cre JOIN de.deulor de ON cre.id_deulor = de.id_deulor JOIN or.municipio or ON de.codigo_municipio = or.codigo_municipio JOIN e.entidades e ON cre.id_entidad = e.id_entidad WHERE e.tipo_entidad = 1 AND de.tipo_persona
+SQL gold: SELECT AVG(tasa_efectiva_promedio_ponderada) AS promedio_tasa FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor WHERE d.clase_deudor = 'deudor nuevo en la entidad' AND c.tipo_tasa = 'vuvr';
+Error ejecución: near "or": syntax error
+
+Pregunta: ¿Cuál es el margen adicional promedio por municipio?
+SQL modelo: SELECT municipio.municipio, COUNT(credito.id_credito) AS total_credito FROM municipio JOIN credito ON municipio.codigo_municipio = credito.id_municipio GROUP BY municipio.municipio ORDER BY total_credito DESC NULLS LAST;
+SQL gold: SELECT m.municipio, AVG(c.margen_adicional) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio GROUP BY m.municipio;
+Error ejecución: no such column: credito.id_municipio
+
+Pregunta: dame el promedio de tasa efectiva para los creditos con este rango de monto Mayor a 3 SMLMV menor o igual a 6 SMLMV
+SQL modelo: UPDATE credito SET tasa_efectiva_promedio_ponderada = NULL WHERE (rango_monto_desembolsado not ilike '%3 SMLMV%' OR rango_monto_desembolsado not ilike '%6 SMLMV%');
+SQL gold: SELECT AVG(tasa_efectiva_promedio_ponderada) FROM Credito WHERE rango_monto_desembolsado ='mayor a 3 smlmv menor o igual a 6 smlmv';
+Error ejecución: near "ilike": syntax error
+
+Pregunta: ¿Cuál es la tasa promedio por departamento?
+SQL modelo: SELECT Credito.tipo_tasa, AVG(Creadito.tasa_efectiva_promedio_ponderada) AS average_promed_interest_rate FROM Creadito GROUP BY Creadito.tipo_tasa;
+SQL gold: SELECT m.departamento, AVG(c.tasa_efectiva_promedio_ponderada) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio GROUP BY m.departamento;
+Error ejecución: no such table: Creadito
+
+Pregunta: quiero ver la informacion de los creditos con el nombre de cada entidad
+SQL modelo: SELECT e.nombre_entidad, c.id_credito, c.tipo_garantia FROM entidades e JOIN credito c ON e.id_entidad = c.id_entidad;
+SQL gold: SELECT c.*, e.nombre_entidad FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad;
+
+Pregunta: En que distintos departamentos residen las grandes empresas?
+SQL modelo: SELECT DISTINCT departamento FROM Deulor;
+SQL gold: SELECT DISTINCT m.departamento FROM Entidades e JOIN Credito c ON e.id_entidad = c.id_entidad JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Municipio m ON d.codigo_municipio = m.codigo_municipio WHERE d.tamano_empresa = 'gran empresa';
+Error ejecución: no such table: Deulor
+
+Pregunta: ¿Cuál es la tasa promedio por tamaño de empresa?
+SQL modelo: SELECT AVG(cre.tasa_efectiva_promedio_ponderada) AS average_promised_interest_rate FROM credito cre JOIN deulor deu ON cre.id_deulor = deu.id_deulor JOIN entidades ent ON deu.codigo_entidad = ent.id_entidad WHERE ent.tipo_entidad = 1;
+SQL gold: SELECT d.tamano_empresa, AVG(c.tasa_efectiva_promedio_ponderada) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor GROUP BY d.tamano_empresa;
+Error ejecución: no such table: deulor
+
+Pregunta: dame el rango del monto desembolsado mas usado en rci colombia s.a.
+SQL modelo: SELECT MAX(credito.monto_desembolsado) AS max_monto_desembolsado FROM credito WHERE credito.rango_monto_desembolsado ILIKE '%usado%mas%usado%' AND credito.id_entidad = (SELECT entidad.id_entidad FROM entidad JOIN municipio ON entidad.codigo_municipio = municipio.codigo_municipio WHERE municipio.departamento ILIKE '%rci%colombia%s.a.%');
+SQL gold: SELECT c.rango_monto_desembolsado FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad WHERE e.nombre_entidad = 'rci colombia s.a.' GROUP BY c.rango_monto_desembolsado ORDER BY COUNT(*) DESC LIMIT 1;
+Error ejecución: near "ILIKE": syntax error
+
+Pregunta: Cuanto suma todo lo desembolsado el 26 de septiembre del 2023?
+SQL modelo: SELECT SUM(credito.monto_desembolsado) AS total_dinero_desembolsado FROM credito WHERE credito.rango_monto_desembolsado ILIKE '%26%de%septiembre%del%2023%' AND credito.id_deulor IS NOT NULL;
+SQL gold: SELECT SUM(monto_desembolsado) FROM Credito WHERE DATE(fecha_corte) = '2023-09-26';
+Error ejecución: near "ILIKE": syntax error
+
+Pregunta: ¿Cuántos créditos se han otorgado por actividad económica?
+SQL modelo: SELECT SUM(creito.numero_creditos_desembolsados) AS total_credits FROM credito JOIN deulor ON credito.id_deulor = deulor.id_deulor JOIN ciu ON deulor.codigo_ciiu = ciu.codigo_ciiu WHERE ciu.actividad_economica ILIKE '%actividad%económica%';
+SQL gold: SELECT ci.actividad_economica, COUNT(c.id_credito) FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Ciiu ci ON d.codigo_ciiu = ci.codigo_ciiu GROUP BY ci.actividad_economica;
+Error ejecución: near "ILIKE": syntax error
+
+Pregunta: dame el registro que tenga la mayor cantidad de creditos desembolsados
+SQL modelo: SELECT MAX(numero_creditos_desembolsados) AS max_creditos_desembolsados FROM credito;
+SQL gold: SELECT * FROM Credito ORDER BY numero_creditos_desembolsados DESC LIMIT 1;
+
+Pregunta: estoy buscando el promedio de tasa efectiva del año 2025
+SQL modelo: SELECT Credito.tasa_efectiva_promedio_ponderada FROM Credito WHERE Credito.tipo_garantia ILIKE '%2025%' AND Credito.tipo_tasa ILIKE '%promedio%'
+SQL gold: SELECT AVG(tasa_efectiva_promedio_ponderada) FROM Credito WHERE STRFTIME('%Y', fecha_corte) = '2025';
+Error ejecución: near "ILIKE": syntax error
+
+Pregunta: Cuántos creditos tiene cada entidad?
+SQL modelo: SELECT e.nombre_entidad, d.numero_creditos_desembolsados FROM entidades e JOIN creditos c ON e.id_entidad = c.id_entidad JOIN deulor d ON c.id_deulor = d.id_deulor;
+SQL gold: SELECT e.nombre_entidad, COUNT(*) FROM Credito c JOIN Entidades e ON c.id_entidad = e.id_entidad GROUP BY e.nombre_entidad;
+Error ejecución: no such table: creditos
+
+Pregunta: Cual es el grupo etnico con mas deudores?
+SQL modelo: SELECT Deulor.grupo_etnico, COUNT(*) AS total_deulores FROM Deulor GROUP BY Deulor.grupo_etnico ORDER BY total_deulores DESC LIMIT 1;
+SQL gold: SELECT d.grupo_etnico, COUNT(*) AS total FROM Deudor d JOIN Credito c ON d.id_deudor = c.id_deudor GROUP BY d.grupo_etnico ORDER BY total DESC LIMIT 1;
+Error ejecución: no such table: Deulor
+
+Pregunta: Qué tipo de crédito se otorgó en el año 2022
+SQL modelo: SELECT tipo_credito FROM credito WHERE id_deulor IN (SELECT id_deulor FROM deulor WHERE antiguedad_empresa ILIKE '%2022%') AND id_entidad IN (SELECT id_entidad FROM entidades WHERE nombre_entidad ILIKE '%crédito%');
+SQL gold: SELECT DISTINCT tipo_credito FROM Credito WHERE STRFTIME('%Y', fecha_corte) = '2022';
+Error ejecución: near "ILIKE": syntax error
+
+Pregunta: cual es la actividad economica con menor tasa promedio
+SQL modelo: SELECT c.actividad_economica FROM credito c JOIN deulor d ON c.id_deulor = d.id_deulor JOIN entidades e ON d.codigo_municipio = e.codigo_municipio WHERE c.tipo_tasa = 'menor' AND e.tipo_entidad = 1070 ORDER BY c.actividad_economica NULLS LAST;
+SQL gold: SELECT ci.actividad_economica, AVG(c.tasa_efectiva_promedio_ponderada) AS promedio_tasa FROM Credito c JOIN Deudor d ON c.id_deudor = d.id_deudor JOIN Ciiu ci ON d.codigo_ciiu = ci.codigo_ciiu GROUP BY ci.actividad_economica ORDER BY promedio_tasa ASC LIMIT 1;
+Error ejecución: no such table: deulor
+
+Pregunta: cuantos creditos hay de consumo o vivienda existen?
+SQL modelo: SELECT COUNT(*) AS total_credits FROM credito WHERE tipo_credito IN ('consumo', 'vivenda');
+SQL gold: SELECT COUNT(*) FROM Credito WHERE tipo_credito IN ('consumo', 'vivienda');
+
+----- RESULTADOS -----
+Total preguntas: 30
+Exact Match: 0.0
+Execution Accuracy: 0.03333333333333333
+Error Rate: 0.7333333333333333
