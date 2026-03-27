@@ -67,7 +67,7 @@ def generar_sql(pregunta):
 
     prompt = f"""
 ### Instruction:
-Write just a SQL query to answer the following question.
+Genera la consulta SQL correcta para la siguiente pregunta.
 
 ### Question:
 {pregunta}
