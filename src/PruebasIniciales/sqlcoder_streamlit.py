@@ -1,75 +1,89 @@
-# ===============================
-# Imports
-# ===============================
 import streamlit as st
-import matplotlib.pyplot as plt
 from llama_cpp import Llama
 import multiprocessing
+import sqlite3
+import pandas as pd
 
 st.title("SQLCoder - GENERADOR DE CONSULTAS SQL")
-st.write("""
-SQLCoder es un modelo de lenguaje especializado diseñado para generar consultas SQL basadas en preguntas en lenguaje natural y esquemas de bases de datos.
-""")
 
-n_threads = multiprocessing.cpu_count()
+DB_PATH = "src/TasaDeInteres/mi_base.db"
 
 @st.cache_resource
 def cargar_llm():
-    n_threads = multiprocessing.cpu_count()
     return Llama(
-        model_path="models/sqlcoder-7b-2.Q4_K_M.gguf",
-        n_threads=n_threads,
+        model_path="models/mistral_fineT_q4km.gguf",
+        n_threads=multiprocessing.cpu_count(),
         n_ctx=4096,
         verbose=False
     )
+def obtener_schema():
+    con = sqlite3.connect(DB_PATH)
+    cursor = con.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tablas = cursor.fetchall()
+    schema = ""
+    for (tabla,) in tablas:
+        cursor.execute(f"SELECT sql FROM sqlite_master WHERE name='{tabla}';")
+        ddl = cursor.fetchone()[0]
+        schema += ddl + ";\n\n"
+    con.close()
+    return schema
+
+def ejecutar_sql(query: str):
+    con = sqlite3.connect(DB_PATH)
+    try:
+        df = pd.read_sql_query(query, con)
+        return df, None
+    except Exception as e:
+        return None, str(e)
+    finally:
+        con.close()
+
+def extraer_sql(texto: str) -> str:
+    texto = texto.strip()
+    if "```sql" in texto:
+        texto = texto.split("```sql")[1].split("```")[0]
+    elif "```" in texto:
+        texto = texto.split("```")[1].split("```")[0]
+    return texto.strip()
 
 llm = cargar_llm()
+schema = obtener_schema()
 
-prompt = st.text_area(
-    "Pregunta en lenguaje natural",
-    value=""
-)
+with st.expander("📋 Ver schema de la base de datos"):
+    st.code(schema, language="sql")
+    
+prompt = st.text_area("Pregunta en lenguaje natural", value="")
 
-if st.button("Generar SQL"):
-    with st.spinner("Generando consulta SQL..."):
-        output = llm(
-            f"""
-### Instruction:
-Write a SQL query to answer the following question.
+if st.button("Generar y ejecutar SQL"):
+    if not prompt.strip():
+        st.warning("Escribe una pregunta primero.")
+    else:
+        with st.spinner("Generando consulta SQL..."):
+            output = llm(
+                f"""### Instruction:
+Genera la consulta SQL correcta para la siguiente pregunta.
 
-### Question:
+### Input:
 {prompt}
 
-### Schema:
-CREATE TABLE clientes (
-   cliente_id INTEGER PRIMARY KEY,
-   nombre VARCHAR(50),
-   direccion VARCHAR(100),
-   edad INTEGER
-);
-CREATE TABLE producto (
-    producto_id INTEGER PRIMARY KEY,
-    nombre_producto VARCHAR(50),
-    precio DECIMAL(10, 2)
-);
-CREATE TABLE productos_ordenes (
-    orden_id INTEGER PRIMARY KEY,
-    cliente_id INTEGER,
-    producto_id INTEGER,
-    cantidad INTEGER,
-    fecha_orden DATE,
-    FOREIGN KEY (cliente_id) REFERENCES clientes(cliente_id),
-    FOREIGN KEY (producto_id) REFERENCES producto(producto_id)
-);
-
-### Response:
+### Output:
 """,
-            max_tokens=256,
-            temperature=0.1,
-            stop=["###"]
-        )
+                max_tokens=128,
+                temperature=0.2,
+                stop=["###"],
+                echo=False
+            )
+            sql = extraer_sql(output["choices"][0]["text"])
 
-        respuesta = output["choices"][0]["text"]
+        st.subheader("SQL generado")
+        st.code(sql, language="sql")
 
-    st.subheader("SQL generado")
-    st.code(respuesta, language="sql")
+        st.subheader("Resultado")
+        df, error = ejecutar_sql(sql)
+        if error:
+            st.error(f"Error al ejecutar la consulta: {error}")
+        elif df.empty:
+            st.info("La consulta no devolvió resultados.")
+        else:
+            st.dataframe(df, use_container_width=True)
