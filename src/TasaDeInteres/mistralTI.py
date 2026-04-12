@@ -21,7 +21,13 @@ def generar_sql(pregunta):
 
     prompt = f"""
 ### Instruction:
-Genera la consulta SQL correcta para la siguiente pregunta.
+Eres un experto en SQL. Genera la consulta SQL correcta para la siguiente pregunta, haz uso de la siguiente información:
+ Reglas:
+- Usa SQL estándar
+- Usa DATE() cuando compares fechas
+- No inventes columnas
+- Usa nombres exactos de tablas
+- usa el esquema de la base de datos presentado a continuación
 
 ### Question:
 {pregunta}
@@ -50,12 +56,13 @@ CREATE TABLE Credito (
     tipo_tasa TEXT,rango_monto_desembolsado TEXT,id_deudor INTEGER,id_entidad INTEGER
 );
 
+
 ### Response:
 """
 
     output = llm(
         prompt,
-        max_tokens=90,
+        max_tokens=130,
         temperature=0,
         stop=["###"]
     )
