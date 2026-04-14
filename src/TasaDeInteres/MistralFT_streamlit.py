@@ -13,7 +13,7 @@ def cargar_llm():
     return Llama(
         model_path="models/mistral_fineT_q4km.gguf",
         n_threads=multiprocessing.cpu_count(),
-        n_ctx=4096,
+        n_ctx=2058,
         verbose=False
     )
 def obtener_schema():
@@ -71,8 +71,9 @@ Genera la consulta SQL correcta para la siguiente pregunta.
 """,
                 max_tokens=128,
                 temperature=0.2,
-                stop=["###"],
-                echo=False
+                stop=["###","n\n",";"],
+                echo=False,
+                top_k=20
             )
             sql = extraer_sql(output["choices"][0]["text"])
 

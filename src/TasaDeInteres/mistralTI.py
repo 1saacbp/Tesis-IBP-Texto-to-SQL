@@ -21,13 +21,16 @@ def generar_sql(pregunta):
 
     prompt = f"""
 ### Instruction:
-Eres un experto en SQL. Genera la consulta SQL correcta para la siguiente pregunta, haz uso de la siguiente información:
- Reglas:
-- Usa SQL estándar
-- Usa DATE() cuando compares fechas
-- No inventes columnas
-- Usa nombres exactos de tablas
-- usa el esquema de la base de datos presentado a continuación
+Eres un experto en SQL para SQLite. Dada una pregunta en lenguaje natural, genera ÚNICAMENTE la consulta SQL correcta, sin explicaciones ni texto adicional.
+
+Reglas obligatorias:
+- Usa CAST(fecha_corte AS DATE) o DATE(fecha_corte) para comparar fechas, ya que fecha_corte es TEXT
+- No uses columnas que no existan en el schema
+- Para cruzar Credito con ubicación: Credito → Deudor → Municipio
+- Para cruzar Credito con sector económico: Credito → Deudor → Ciiu
+- Para cruzar Credito con entidad: Credito → Entidades via id_entidad
+- SUM(monto_desembolsado) para totales, COUNT(*) o SUM(numero_creditos_desembolsados) para conteos
+- Cuando filtres por tipo_entidad, tipo_credito, tipo_persona u otros campos categóricos, usa el valor exacto como aparece en los datos
 
 ### Question:
 {pregunta}
